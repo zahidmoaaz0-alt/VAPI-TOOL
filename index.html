@@ -470,12 +470,9 @@ if (!contactId) {
 
 // 3. Work out who to assign. Team and round-robin calendars reject bookings
 // without assignedUserId, so read the calendar's team members by default.
-// env.GHL_ASSIGNED_USER_ID (optional) overrides this.
 const readJson = async (r) => { const t = await r.text(); try { return t ? JSON.parse(t) : null; } catch { return t; } };
 let candidates = [];
-if (env.GHL_ASSIGNED_USER_ID) {
-  candidates = [env.GHL_ASSIGNED_USER_ID];
-} else {
+{
   const calRes = await fetch(`${GHL_API_BASE}/calendars/${GHL_CALENDAR_ID}`, {
     headers: { Authorization: `Bearer ${GHL_API_KEY}`, Version: "2021-04-15", Accept: "application/json" }
   });
