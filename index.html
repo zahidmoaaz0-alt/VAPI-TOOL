@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Vapi Calendar Tool Installer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: form steps on the left, a sticky results column on the right; stacks to one column on phones. */
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --ink: #152033;
+  --muted: #586579;
+  --line: #d6dce6;
+  --accent: #2450c2;
+  --accent-ink: #ffffff;
+  --code: #f3f5f9;
+  --ok: #1d7549;
+  --err: #b3261e;
+  --warn: #8a5800;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --radius: 8px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e131a;
+    --surface: #161d27;
+    --ink: #e5eaf2;
+    --muted: #97a3b5;
+    --line: #283243;
+    --accent: #86a6ff;
+    --accent-ink: #0b1220;
+    --code: #10161f;
+    --ok: #62cc93;
+    --err: #ff8f86;
+    --warn: #f0b85c;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--font-body);
+  padding-inline: 16px;
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+header h1 {
+  font: 600 clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem)/1.15 var(--font-display);
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+header p { margin: 0; color: var(--muted); max-width: 68ch; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+form { display: grid; gap: 16px; min-width: 0; }
+.step {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+.step h2 {
+  margin: 0;
+  font: 600 1.05rem/1.3 var(--font-display);
+  display: flex; align-items: baseline; gap: 10px;
+}
+.step h2 .n { font: 500 0.8rem var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
+.step > p.lead { margin: -6px 0 0; color: var(--muted); font-size: 0.93rem; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+label { font-weight: 600; font-size: 0.9rem; }
+.hint { margin: 0; color: var(--muted); font-size: 0.84rem; }
+input, select {
+  width: 100%;
+  font: 0.95rem/1.3 var(--font-body);
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 11px;
+  min-width: 0;
+}
+input.mono { font-family: var(--font-mono); font-size: 0.88rem; }
+input:focus-visible, select:focus-visible, button:focus-visible, .asst input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row > input { flex: 1 1 220px; }
+button {
+  font: 600 0.9rem/1 var(--font-body);
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  white-space: nowrap;
+}
+button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.primary:hover:not(:disabled) { color: var(--accent-ink); filter: brightness(1.08); }
+button:disabled { opacity: 0.55; cursor: progress; }
+.status { margin: 0; font-size: 0.87rem; min-height: 1.2em; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
+.status.warn { color: var(--warn); }
+.asst-list { display: grid; gap: 6px; max-height: 260px; overflow: auto; padding-right: 4px; }
+.asst {
+  display: flex; gap: 10px; align-items: center;
+  border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px;
+  font-weight: 400; cursor: pointer; min-width: 0;
+}
+.asst input, .pick input { width: auto; margin: 0; }
+.pick { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.field.off input.mono { opacity: 0.45; }
+.asst span { overflow-wrap: anywhere; }
+.asst small { color: var(--muted); font-family: var(--font-mono); font-size: 0.75rem; margin-left: auto; }
+.empty { color: var(--muted); font-size: 0.9rem; margin: 0; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+aside { position: sticky; top: 16px; display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 900px) { aside { position: static; } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { margin: 0; font: 600 1rem/1.3 var(--font-display); }
+.panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+ol.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.88rem; }
+ol.log li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; overflow-wrap: anywhere; }
+ol.log li::before { content: "•"; color: var(--muted); }
+ol.log li.ok::before { content: "✓"; color: var(--ok); }
+ol.log li.err::before { content: "✕"; color: var(--err); }
+ol.log li.warn::before { content: "!"; color: var(--warn); font-weight: 700; }
+ol.log li.err { color: var(--err); }
+.ids { display: grid; gap: 8px; }
+.idrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.idrow div { min-width: 0; }
+.idrow b { display: block; font-size: 0.82rem; }
+.idrow code { font: 0.82rem var(--font-mono); overflow-wrap: anywhere; }
+pre {
+  margin: 0;
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+  font: 0.78rem/1.5 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow: auto;
+}
+.small-btn { padding: 7px 10px; font-size: 0.8rem; }
+.note { font-size: 0.84rem; color: var(--muted); margin: 0; }
+@media (prefers-reduced-motion: no-preference) { button { transition: filter .15s, border-color .15s, color .15s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Vapi Calendar Tool Installer</h1>
+    <p>Creates the GHL availability and booking tools in a client's Vapi account, attaches them to the agents you pick, and writes the matching prompt section. Keys are sent only from this browser to Vapi and GHL. Nothing is stored.</p>
+  </header>
+
+  <div class="layout">
+    <form id="form" novalidate>
+      <section class="step">
+        <h2><span class="n">01</span>Vapi account</h2>
+        <div class="field">
+          <label for="vapiKey">Vapi private API key</label>
+          <div class="row">
+            <input id="vapiKey" class="mono" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the private key">
+            <button type="button" id="btnVapi">Connect</button>
+          </div>
+          <p class="hint">In Vapi, open the organization menu, then API Keys. Use the private key, not the public one.</p>
+        </div>
+        <p class="status" id="stVapi" role="status"></p>
+      </section>
+
+      <section class="step">
+        <h2><span class="n">02</span>GHL sub-account</h2>
+        <div class="grid2">
+          <div class="field">
+            <label for="ghlToken">Private Integration token</label>
+            <input id="ghlToken" class="mono" type="password" autocomplete="off" spellcheck="false" placeholder="pit-…">
+            <p class="hint">Settings, Private Integrations. Needs calendars, calendar events, contacts and locations (read) scopes.</p>
+          </div>
+          <div class="field">
+            <label for="locationId">Location ID</label>
+            <input id="locationId" class="mono" autocomplete="off" spellcheck="false" placeholder="Sub-account ID">
+            <p class="hint">Settings, Business Profile, or the ID in the sub-account's URL.</p>
+          </div>
+        </div>
+        <div class="row">
+          <button type="button" id="btnGhl">Load calendars</button>
+        </div>
+        <p class="status" id="stGhl" role="status"></p>
+        <div class="grid2">
+          <div class="field">
+            <label for="calendarSel">Calendar</label>
+            <select id="calendarSel"><option value="">Load calendars first</option></select>
+          </div>
+          <div class="field">
+            <label for="calendarId">Calendar ID</label>
+            <input id="calendarId" class="mono" autocomplete="off" spellcheck="false" placeholder="Filled when you pick a calendar">
+          </div>
+          <div class="field">
+            <label for="timezone">Calendar time zone</label>
+            <input id="timezone" class="mono" list="tzList" autocomplete="off" spellcheck="false" value="America/New_York">
+            <datalist id="tzList">
+              <option value="America/New_York"><option value="America/Chicago"><option value="America/Denver">
+              <option value="America/Phoenix"><option value="America/Los_Angeles"><option value="America/Anchorage">
+              <option value="Pacific/Honolulu"><option value="America/Toronto"><option value="America/Vancouver">
+              <option value="Europe/London"><option value="Australia/Sydney">
+            </datalist>
+            <p class="hint">Filled from the sub-account when possible. Check it matches the calendar.</p>
+          </div>
+          <div class="field">
+            <label for="business">Business name</label>
+            <input id="business" autocomplete="off" placeholder="Wellness Partners">
+            <p class="hint">Appointments are titled "Caller Name X Business name".</p>
+          </div>
+        </div>
+        <div class="row">
+          <button type="button" id="btnTest">Test availability</button>
+        </div>
+        <p class="status" id="stTest" role="status"></p>
+      </section>
+
+      <section class="step">
+        <h2><span class="n">03</span>Tools to create</h2>
+        <p class="lead">Untick a tool to skip it. The agent calls tools by these names. Letters, numbers, _ and - only.</p>
+        <div class="grid2">
+          <div class="field">
+            <label class="pick" for="use1"><input type="checkbox" id="use1" checked> Availability tool</label>
+            <input id="name1" class="mono" autocomplete="off" spellcheck="false" value="tool_1_Check_Slot" aria-label="Availability tool name">
+          </div>
+          <div class="field">
+            <label class="pick" for="use2"><input type="checkbox" id="use2" checked> Booking tool</label>
+            <input id="name2" class="mono" autocomplete="off" spellcheck="false" value="Tool_2_Upsert_and_Book" aria-label="Booking tool name">
+          </div>
+        </div>
+        <p class="status" id="stNames" role="status"></p>
+      </section>
+
+      <section class="step">
+        <h2><span class="n">04</span>Attach to agents</h2>
+        <p class="lead">Optional. Older copies of these tools on the selected agents are swapped for the new ones.</p>
+        <div class="asst-list" id="asstList"><p class="empty">Connect Vapi in step 01 to list agents.</p></div>
+      </section>
+
+      <section class="step">
+        <h2><span class="n">05</span>Create</h2>
+        <div class="actions">
+          <button type="submit" class="primary" id="btnCreate">Create tools</button>
+          <button type="button" id="btnPreview">Preview request</button>
+        </div>
+        <p class="status" id="stCreate" role="status"></p>
+      </section>
+    </form>
+
+    <aside>
+      <section class="panel">
+        <div class="panel-head"><h2>Progress</h2><button type="button" class="small-btn" id="btnClear">Clear</button></div>
+        <ol class="log" id="log"><li>Fill in steps 01 to 04, then create.</li></ol>
+      </section>
+
+      <section class="panel" id="idsPanel" hidden>
+        <h2>Created tools</h2>
+        <div class="ids" id="ids"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Prompt section</h2><button type="button" class="small-btn" id="btnCopyPrompt">Copy</button></div>
+        <p class="note">Paste into each agent's system prompt. It updates as you change the time zone and tool names.</p>
+        <pre id="prompt"></pre>
+      </section>
+
+      <section class="panel" id="previewPanel" hidden>
+        <div class="panel-head"><h2>Request preview</h2><button type="button" class="small-btn" id="btnHidePreview">Hide</button></div>
+        <p class="note">Keys are masked here. The real request sends them in full.</p>
+        <pre id="preview"></pre>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script type="text/plain" id="code-tool1">// ─────────────────────────────────────────────────────────────────────────────
+// VAPI Code Tool 1: Check Available Slots on GHL Calendar
+// Uses the calendar's own time zone. Fetches one extra day on each side and
+// filters by GHL's date keys, so late-evening slots are never cut off.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { startDate, endDate } = args;
+const { GHL_API_KEY, GHL_CALENDAR_ID, GHL_API_BASE } = env;
+
+const DAY = 24 * 60 * 60 * 1000;
+const MAX_RANGE_DAYS = 31;
+const isDay = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || "");
+
+// 1. Validate
+const missing = [];
+if (!startDate) missing.push("startDate");
+if (!GHL_API_KEY) missing.push("env.GHL_API_KEY");
+if (!GHL_CALENDAR_ID) missing.push("env.GHL_CALENDAR_ID");
+if (!GHL_API_BASE) missing.push("env.GHL_API_BASE");
+
+if (missing.length > 0) {
+  return { error: true, message: `Missing required fields: ${missing.join(", ")}` };
+}
+if (!isDay(startDate) || isNaN(Date.parse(startDate))) {
+  return { error: true, message: `Invalid startDate "${startDate}". Use YYYY-MM-DD.` };
+}
+if (endDate && (!isDay(endDate) || isNaN(Date.parse(endDate)))) {
+  return { error: true, message: `Invalid endDate "${endDate}". Use YYYY-MM-DD.` };
+}
+
+// 2. Resolve the requested day range (inclusive). No endDate means 7 days.
+const firstDay = startDate;
+let lastDay = endDate || new Date(Date.parse(startDate) + 6 * DAY).toISOString().slice(0, 10);
+if (lastDay < firstDay) {
+  return { error: true, message: "endDate is before startDate." };
+}
+const maxLastDay = new Date(Date.parse(firstDay) + (MAX_RANGE_DAYS - 1) * DAY).toISOString().slice(0, 10);
+if (lastDay > maxLastDay) lastDay = maxLastDay;
+
+// 3. Fetch free slots with a one-day buffer on each side
+const url = new URL(`${GHL_API_BASE}/calendars/${GHL_CALENDAR_ID}/free-slots`);
+url.searchParams.set("startDate", String(Date.parse(firstDay) - DAY));
+url.searchParams.set("endDate", String(Date.parse(lastDay) + 2 * DAY - 1));
+
+const res = await fetch(url.toString(), {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${GHL_API_KEY}`,
+    Version: "2021-04-15",
+    Accept: "application/json"
+  }
+});
+
+const text = await res.text();
+let data;
+try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+
+if (!res.ok) {
+  return { error: true, message: "GHL API error.", status: res.status, data };
+}
+
+// 4. Flatten slots, keeping only days inside the requested range
+const datesMap = data?._dates_ || data?.dates || data;
+if (!datesMap || typeof datesMap !== "object") {
+  return { error: false, slotsFound: 0, slots: [], summary: "There are no available slots for that date range." };
+}
+
+const dayNames = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const slots = [];
+
+for (const [dateKey, dateObj] of Object.entries(datesMap)) {
+  if (!isDay(dateKey) || dateKey < firstDay || dateKey > lastDay) continue;
+  const rawSlots = Array.isArray(dateObj) ? dateObj : (dateObj?.slots || []);
+  const d = new Date(dateKey + "T12:00:00Z");
+  const dateLabel = `${dayNames[d.getUTCDay()]}, ${monthNames[d.getUTCMonth()]} ${d.getUTCDate()}`;
+  for (const iso of rawSlots) {
+    if (!iso) continue;
+    const timePart = iso.match(/T(\d{2}):(\d{2})/);
+    let timeLabel = iso;
+    if (timePart) {
+      let hour = parseInt(timePart[1], 10);
+      const minute = timePart[2];
+      const ampm = hour >= 12 ? "PM" : "AM";
+      hour = hour % 12 || 12;
+      timeLabel = `${hour}:${minute} ${ampm}`;
+    }
+    slots.push({ date: dateLabel, time: timeLabel, iso });
+  }
+}
+
+slots.sort((a, b) => new Date(a.iso) - new Date(b.iso));
+
+const MAX_SLOTS = 20;
+const outputSlots = slots.slice(0, MAX_SLOTS);
+
+return {
+  error: false,
+  range: { startDate: firstDay, endDate: lastDay },
+  slotsFound: slots.length,
+  slots: outputSlots,
+  summary: outputSlots.length === 0
+    ? "There are no available slots for that date range."
+    : `I found ${slots.length} available slot${slots.length !== 1 ? "s" : ""}. ` +
+      outputSlots.slice(0, 5).map(s => `${s.date} at ${s.time}`).join(", ") + "."
+};
+</script>
+<script type="text/plain" id="code-tool2">// ─────────────────────────────────────────────────────────────────────────────
+// VAPI Code Tool 2: Upsert Contact + Create Appointment on GHL Calendar
+// Time zone and business name come from env, so the tool is identical for
+// every client. Email is optional.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const { startTime, name, email, phone } = args;
+const { GHL_API_KEY, GHL_CALENDAR_ID, GHL_LOCATION_ID, GHL_API_BASE, GHL_TIMEZONE: timezone, BUSINESS_NAME } = env;
+
+// 1. Validate
+const missing = [];
+if (!startTime) missing.push("startTime");
+if (!name) missing.push("name");
+if (!phone) missing.push("phone");
+if (!timezone) missing.push("env.GHL_TIMEZONE");
+if (!GHL_API_KEY) missing.push("env.GHL_API_KEY");
+if (!GHL_CALENDAR_ID) missing.push("env.GHL_CALENDAR_ID");
+if (!GHL_LOCATION_ID) missing.push("env.GHL_LOCATION_ID");
+if (!GHL_API_BASE) missing.push("env.GHL_API_BASE");
+
+if (missing.length > 0) {
+  return { error: true, message: `Missing required fields: ${missing.join(", ")}` };
+}
+
+if (isNaN(new Date(startTime).getTime())) {
+  return { error: true, message: `Invalid startTime "${startTime}". Must be ISO 8601.` };
+}
+
+// 2. Upsert contact (phone normalised to E.164; assumes US/CA when no country code)
+const digits = String(phone).replace(/\D/g, "");
+const e164 = String(phone).trim().startsWith("+") ? `+${digits}` : (digits.length === 10 ? `+1${digits}` : `+${digits}`);
+
+const upsertRes = await fetch(`${GHL_API_BASE}/contacts/upsert`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${GHL_API_KEY}`,
+    Version: "2021-07-28",
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    locationId: GHL_LOCATION_ID,
+    name,
+    phone: e164,
+    timezone,
+    ...(email ? { email } : {})
+  })
+});
+
+const upsertText = await upsertRes.text();
+let upsertData;
+try { upsertData = upsertText ? JSON.parse(upsertText) : null; } catch { upsertData = upsertText; }
+
+if (!upsertRes.ok) {
+  return { error: true, message: "Failed to upsert contact.", status: upsertRes.status, data: upsertData };
+}
+
+const contact = upsertData?.contact || upsertData;
+const contactId = contact?.id;
+const contactFullName = contact?.name || contact?.fullName || name;
+
+if (!contactId) {
+  return { error: true, message: "Contact upserted but no contactId returned.", data: upsertData };
+}
+
+// 3. Work out who to assign. Team and round-robin calendars reject bookings
+// without assignedUserId, so read the calendar's team members by default.
+// env.GHL_ASSIGNED_USER_ID (optional) overrides this.
+const readJson = async (r) => { const t = await r.text(); try { return t ? JSON.parse(t) : null; } catch { return t; } };
+let candidates = [];
+if (env.GHL_ASSIGNED_USER_ID) {
+  candidates = [env.GHL_ASSIGNED_USER_ID];
+} else {
+  const calRes = await fetch(`${GHL_API_BASE}/calendars/${GHL_CALENDAR_ID}`, {
+    headers: { Authorization: `Bearer ${GHL_API_KEY}`, Version: "2021-04-15", Accept: "application/json" }
+  });
+  if (calRes.ok) {
+    const calData = await readJson(calRes);
+    const cal = calData?.calendar || calData;
+    candidates = (cal?.teamMembers || []).map((m) => m.userId).filter(Boolean);
+  }
+}
+// Fall back to no assignee (works for calendars with no team members)
+if (candidates.length === 0) candidates = [null];
+
+// 4. Create appointment, trying each team member until one accepts the slot
+const appointmentTitle = `${contactFullName} X ${BUSINESS_NAME || "Appointment"}`;
+let apptRes, apptData, assignedUserId;
+for (const userId of candidates) {
+  apptRes = await fetch(`${GHL_API_BASE}/calendars/events/appointments`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${GHL_API_KEY}`,
+      Version: "2021-04-15",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      calendarId: GHL_CALENDAR_ID,
+      locationId: GHL_LOCATION_ID,
+      contactId,
+      startTime,
+      title: appointmentTitle,
+      appointmentStatus: "confirmed",
+      ...(userId ? { assignedUserId: userId } : {})
+    })
+  });
+  apptData = await readJson(apptRes);
+  if (apptRes.ok) { assignedUserId = userId; break; }
+}
+
+if (!apptRes.ok) {
+  return {
+    error: true,
+    message: "Contact upserted successfully but appointment creation failed. The slot may no longer be available; check slots again.",
+    contactId,
+    triedUsers: candidates.length,
+    status: apptRes.status,
+    data: apptData
+  };
+}
+
+return {
+  error: false,
+  message: `Appointment confirmed for ${contactFullName}.`,
+  appointmentId: apptData?.id || apptData?.event?.id,
+  appointmentTitle,
+  contactId,
+  contactName: contactFullName,
+  assignedUserId,
+  startTime,
+  timezone
+};
+</script>
+
+<script>
+(() => {
+  const VAPI = "https://api.vapi.ai";
+  const GHL = "https://services.leadconnectorhq.com";
+  const NAME_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+  const $ = (id) => document.getElementById(id);
+  const val = (id) => $(id).value.trim();
+  const state = { assistants: [], tools: [], busy: false };
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+  function setStatus(id, text, kind) {
+    const el = $(id);
+    el.textContent = text || "";
+    el.className = "status" + (kind ? " " + kind : "");
+  }
+  function log(text, kind) {
+    const li = document.createElement("li");
+    li.textContent = text;
+    if (kind) li.className = kind;
+    $("log").appendChild(li);
+    li.scrollIntoView({ block: "nearest" });
+  }
+  async function request(url, opts) {
+    const res = await fetch(url, opts);
+    const text = await res.text();
+    let data;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    if (!res.ok) {
+      let msg = data && typeof data === "object" ? (data.message || data.error || data.msg) : data;
+      if (Array.isArray(msg)) msg = msg.join("; ");
+      const err = new Error(`${res.status}${msg ? ": " + msg : ""}`);
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+  function vapi(path, method, body) {
+    const headers = { Authorization: "Bearer " + val("vapiKey") };
+    if (body) headers["Content-Type"] = "application/json";
+    return request(VAPI + path, { method: method || "GET", headers, body: body ? JSON.stringify(body) : undefined });
+  }
+  function ghl(path, version) {
+    return request(GHL + path, {
+      headers: { Authorization: "Bearer " + val("ghlToken"), Version: version, Accept: "application/json" }
+    });
+  }
+  function explain(err, service) {
+    if (err instanceof TypeError) return `Could not reach ${service}. Check your connection and try again.`;
+    if (err.status === 401 || err.status === 403) {
+      return service === "Vapi"
+        ? "Vapi rejected the key. Make sure it is the private key, not the public one."
+        : `GHL rejected the token (${err.message}). Check the token belongs to this sub-account and has the listed scopes.`;
+    }
+    return `${service} error ${err.message}`;
+  }
+  function validTz(tz) {
+    try { new Intl.DateTimeFormat("en-US", { timeZone: tz }); return !!tz; } catch { return false; }
+  }
+  function mask(s) {
+    if (!s) return "";
+    return s.length <= 10 ? "••••" : s.slice(0, 4) + "••••" + s.slice(-4);
+  }
+  function localDay(offsetDays, tz) {
+    const d = new Date(Date.now() + offsetDays * 86400000);
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
+  }
+  async function copy(text, btn) {
+    const label = btn.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = "Copied";
+    } catch {
+      btn.textContent = "Select and copy";
+    }
+    setTimeout(() => { btn.textContent = label; }, 1600);
+  }
+  function setBusy(on, ...ids) {
+    state.busy = on;
+    ids.forEach((id) => { $(id).disabled = on; });
+  }
+
+  // ── tool definitions ─────────────────────────────────────────────────────
+  function envVars() {
+    return [
+      { name: "GHL_API_BASE", value: GHL },
+      { name: "GHL_API_KEY", value: val("ghlToken") },
+      { name: "GHL_LOCATION_ID", value: val("locationId") },
+      { name: "GHL_CALENDAR_ID", value: val("calendarId") },
+      { name: "GHL_TIMEZONE", value: val("timezone") },
+      { name: "BUSINESS_NAME", value: val("business") || "Appointment" }
+    ];
+  }
+  function toolPayloads() {
+    const n1 = val("name1"), n2 = val("name2");
+    const env = envVars();
+    const tool1 = {
+      type: "code",
+      code: $("code-tool1").textContent.trim(),
+      timeoutSeconds: 20,
+      function: {
+        name: n1,
+        description: "Checks open appointment slots on the calendar. Call this before offering any times to the caller. Pass the day the caller wants as startDate. Pass endDate only when they give a range. With no endDate it checks 7 days from startDate.",
+        parameters: {
+          type: "object",
+          properties: {
+            startDate: { type: "string", description: "First day to check, format YYYY-MM-DD." },
+            endDate: { type: "string", description: "Optional last day to check, format YYYY-MM-DD." }
+          },
+          required: ["startDate"]
+        }
+      },
+      environmentVariables: env.filter((e) => ["GHL_API_BASE", "GHL_API_KEY", "GHL_CALENDAR_ID"].includes(e.name)),
+      messages: [{ type: "request-start", content: "Let me check what's open." }]
+    };
+    const tool2 = {
+      type: "code",
+      code: $("code-tool2").textContent.trim(),
+      timeoutSeconds: 25,
+      function: {
+        name: n2,
+        description: `Creates or updates the caller's contact and books the appointment. Only call this after the caller has picked a time from ${n1} results and confirmed it.`,
+        parameters: {
+          type: "object",
+          properties: {
+            startTime: { type: "string", description: `The exact 'iso' value of the chosen slot from ${n1}. Do not change or reformat it.` },
+            name: { type: "string", description: "Caller's full name." },
+            email: { type: "string", description: "Caller's email address, if they gave one." },
+            phone: { type: "string", description: "Caller's phone number in E.164 format, e.g. +15551234567." }
+          },
+          required: ["startTime", "name", "phone"]
+        }
+      },
+      environmentVariables: env,
+      messages: [{ type: "request-start", content: "One moment while I lock that in." }]
+    };
+    return [tool1, tool2];
+  }
+
+  // ── prompt ───────────────────────────────────────────────────────────────
+  function buildPrompt() {
+    const tz = validTz(val("timezone")) ? val("timezone") : "America/New_York";
+    const n1 = val("name1") || "tool_1_Check_Slot";
+    const n2 = val("name2") || "Tool_2_Upsert_and_Book";
+    return `## Current Date and Time
+Today is {{"now" | date: "%A, %B %d, %Y", "${tz}"}}.
+The current time is {{"now" | date: "%I:%M %p", "${tz}"}}.
+Use this to work out dates like "tomorrow", "this Friday" or "next week".
+
+## Caller Details
+The caller's phone number is {{customer.number}}. Use it as the phone for booking. Do not ask for their number unless they want a different one used.
+
+## Appointment Setting
+1. Ask the caller what day or time works best for them.
+2. Convert their answer to a date in YYYY-MM-DD format and call ${n1}.
+   - A specific day: set startDate and endDate to that day.
+   - A range ("sometime next week"): set startDate and endDate to cover the range.
+   - No preference: set startDate to today and leave endDate empty.
+3. The tool says a short line while it checks. Do not add your own.
+4. Offer no more than 2 or 3 times, picking the ones closest to what the caller asked for. Never read the full list.
+5. Only offer times returned by the tool. Never guess or invent a time.
+6. If no slots are found, check the following 7 days once. If still nothing is open, offer to have the team call them back.
+7. If the tool returns an error, do not read it out. Say you are having trouble pulling up the calendar and offer a callback.
+8. When the caller picks a time, repeat the day and time back and get a clear yes.
+9. Collect their full name. Ask for an email; if they give one, have them spell it and read it back to confirm. If they would rather not, continue without it.
+10. Call ${n2} with:
+   - startTime: the exact "iso" value of the chosen slot, unchanged
+   - name: as confirmed with the caller
+   - email: only if confirmed
+   - phone: {{customer.number}}
+11. If the booking tool returns error false, confirm the day and time with the caller and tell them they will get a confirmation.
+12. If the booking tool returns an error, the slot may have just been taken. Call ${n1} again for the same day and offer the next closest times. If booking fails a second time, do not retry. Tell the caller the team will call them to confirm.
+13. Never say the appointment is booked until the booking tool returns error false.
+14. Never read error messages, IDs or technical details to the caller.
+
+## How to Say Times
+- Say dates naturally: "Tuesday the 6th at 2 PM", not "2026-10-06".
+- Don't mention the year or time zone unless the caller asks.`;
+  }
+  function renderPrompt() { $("prompt").textContent = buildPrompt(); }
+
+  // ── step 01: Vapi ────────────────────────────────────────────────────────
+  async function connectVapi() {
+    if (!val("vapiKey")) return setStatus("stVapi", "Paste the Vapi private key first.", "err");
+    setBusy(true, "btnVapi");
+    setStatus("stVapi", "Connecting…");
+    try {
+      const [assistants, tools] = await Promise.all([vapi("/assistant?limit=1000"), vapi("/tool?limit=1000")]);
+      state.assistants = (Array.isArray(assistants) ? assistants : []).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+      state.tools = Array.isArray(tools) ? tools : [];
+      renderAssistants();
+      setStatus("stVapi", `Connected. ${state.assistants.length} agent${state.assistants.length === 1 ? "" : "s"}, ${state.tools.length} existing tool${state.tools.length === 1 ? "" : "s"}.`, "ok");
+      checkNames();
+    } catch (err) {
+      setStatus("stVapi", explain(err, "Vapi"), "err");
+    } finally {
+      setBusy(false, "btnVapi");
+    }
+  }
+  function renderAssistants() {
+    const box = $("asstList");
+    box.textContent = "";
+    if (!state.assistants.length) {
+      const p = document.createElement("p");
+      p.className = "empty";
+      p.textContent = "No agents in this Vapi account yet. You can attach the tools later in Vapi.";
+      box.appendChild(p);
+      return;
+    }
+    state.assistants.forEach((a) => {
+      const lab = document.createElement("label");
+      lab.className = "asst";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = a.id;
+      cb.id = "asst-" + a.id;
+      const name = document.createElement("span");
+      name.textContent = a.name || "Untitled agent";
+      const id = document.createElement("small");
+      id.textContent = a.id.slice(0, 8);
+      lab.append(cb, name, id);
+      box.appendChild(lab);
+    });
+  }
+  function toolName(t) { return (t && t.function && t.function.name) || ""; }
+  function chosen() {
+    return [["use1", "name1"], ["use2", "name2"]].filter(([use]) => $(use).checked).map(([, name]) => val(name));
+  }
+  function namesProblem() {
+    const names = chosen();
+    if (!names.length) return "Tick at least one tool to create.";
+    if (names.some((n) => !NAME_RE.test(n))) return "Tool names can only use letters, numbers, _ and -, up to 64 characters.";
+    if (names.length === 2 && names[0].toLowerCase() === names[1].toLowerCase()) return "The two tools need different names.";
+    return "";
+  }
+  function checkNames() {
+    ["1", "2"].forEach((n) => $("name" + n).closest(".field").classList.toggle("off", !$("use" + n).checked));
+    const problem = namesProblem();
+    if (problem) return setStatus("stNames", problem, "err");
+    const names = chosen();
+    const dupes = state.tools.filter((t) => names.map((x) => x.toLowerCase()).includes(toolName(t).toLowerCase()));
+    if (dupes.length) {
+      return setStatus("stNames", `This Vapi account already has ${dupes.length} tool${dupes.length === 1 ? "" : "s"} with ${names.length === 1 ? "this name" : "these names"}. New copies will be created alongside them. Add the client name to tell them apart, e.g. ${names[0]}_${(val("business") || "client").replace(/[^a-zA-Z0-9]+/g, "")}.`, "warn");
+    }
+    setStatus("stNames", "");
+  }
+
+  // ── step 02: GHL ─────────────────────────────────────────────────────────
+  async function loadCalendars() {
+    if (!val("ghlToken") || !val("locationId")) return setStatus("stGhl", "Enter the token and Location ID first.", "err");
+    setBusy(true, "btnGhl");
+    setStatus("stGhl", "Loading…");
+    try {
+      const data = await ghl(`/calendars/?locationId=${encodeURIComponent(val("locationId"))}`, "2021-04-15");
+      const cals = (data && data.calendars) || [];
+      const sel = $("calendarSel");
+      sel.textContent = "";
+      const first = document.createElement("option");
+      first.value = "";
+      first.textContent = cals.length ? "Choose a calendar" : "No calendars in this sub-account";
+      sel.appendChild(first);
+      cals.forEach((c) => {
+        const o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = (c.name || c.id) + (c.isActive === false ? " (inactive)" : "");
+        sel.appendChild(o);
+      });
+      if (cals.length === 1) { sel.value = cals[0].id; $("calendarId").value = cals[0].id; }
+      let msg = `Found ${cals.length} calendar${cals.length === 1 ? "" : "s"}.`;
+      try {
+        const loc = await ghl(`/locations/${encodeURIComponent(val("locationId"))}`, "2021-07-28");
+        const l = loc && (loc.location || loc);
+        if (l && l.timezone && validTz(l.timezone)) { $("timezone").value = l.timezone; msg += ` Time zone set to ${l.timezone}.`; }
+        if (l && l.name && !val("business")) $("business").value = l.name;
+      } catch {
+        msg += " Could not read the sub-account time zone, so check it by hand.";
+      }
+      setStatus("stGhl", msg, "ok");
+      renderPrompt();
+    } catch (err) {
+      setStatus("stGhl", explain(err, "GHL"), "err");
+    } finally {
+      setBusy(false, "btnGhl");
+    }
+  }
+  async function testAvailability() {
+    if (!val("ghlToken") || !val("calendarId")) return setStatus("stTest", "Enter the token and pick a calendar first.", "err");
+    const tz = val("timezone");
+    if (!validTz(tz)) return setStatus("stTest", `"${tz}" is not a valid time zone. Use a name like America/Chicago.`, "err");
+    setBusy(true, "btnTest");
+    setStatus("stTest", "Checking the next 7 days…");
+    try {
+      const first = localDay(0, tz), last = localDay(6, tz);
+      const start = Date.parse(first) - 86400000, end = Date.parse(last) + 2 * 86400000 - 1;
+      const data = await ghl(`/calendars/${encodeURIComponent(val("calendarId"))}/free-slots?startDate=${start}&endDate=${end}`, "2021-04-15");
+      const map = (data && (data._dates_ || data.dates)) || data || {};
+      const slots = [];
+      Object.entries(map).forEach(([day, obj]) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || day < first || day > last) return;
+        const list = Array.isArray(obj) ? obj : (obj && obj.slots) || [];
+        list.forEach((s) => s && slots.push(s));
+      });
+      slots.sort((a, b) => new Date(a) - new Date(b));
+      if (!slots.length) {
+        setStatus("stTest", "The calendar connected, but it has no open slots in the next 7 days. Check its availability settings.", "warn");
+      } else {
+        const nice = new Date(slots[0]).toLocaleString("en-US", { timeZone: tz, weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+        setStatus("stTest", `Working. ${slots.length} open slot${slots.length === 1 ? "" : "s"} in the next 7 days. First: ${nice}.`, "ok");
+      }
+    } catch (err) {
+      setStatus("stTest", explain(err, "GHL"), "err");
+    } finally {
+      setBusy(false, "btnTest");
+    }
+  }
+
+  // ── step 05: create ──────────────────────────────────────────────────────
+  function validate() {
+    const problems = [];
+    if (!val("vapiKey")) problems.push("Vapi private API key");
+    if (!val("ghlToken")) problems.push("GHL Private Integration token");
+    if ($("use2").checked && !val("locationId")) problems.push("Location ID");
+    if (!val("calendarId")) problems.push("Calendar ID");
+    if ($("use2").checked && !validTz(val("timezone"))) problems.push("a valid time zone");
+    const nameIssue = namesProblem();
+    if (nameIssue) problems.push(nameIssue.replace(/\.$/, "").toLowerCase());
+    return problems;
+  }
+  function selectedAssistants() {
+    return Array.from(document.querySelectorAll("#asstList input:checked")).map((cb) => cb.value);
+  }
+  function selectedPayloads() {
+    const [t1, t2] = toolPayloads();
+    return [$("use1").checked && t1, $("use2").checked && t2].filter(Boolean);
+  }
+  function showPreview() {
+    const maskEnv = (t) => ({ ...t, code: `/* ${t.code.split("\n").length} lines from the tool file */`, environmentVariables: t.environmentVariables.map((e) => e.name === "GHL_API_KEY" ? { ...e, value: mask(e.value) } : e) });
+    const out = {};
+    selectedPayloads().forEach((t) => { out[`POST https://api.vapi.ai/tool (${t.function.name})`] = maskEnv(t); });
+    out["Attach to agents"] = selectedAssistants().map((id) => (state.assistants.find((a) => a.id === id) || {}).name || id);
+    $("preview").textContent = JSON.stringify(out, null, 2);
+    $("previewPanel").hidden = false;
+    $("previewPanel").scrollIntoView({ block: "nearest" });
+  }
+  function addIdRow(label, id) {
+    const row = document.createElement("div");
+    row.className = "idrow";
+    const left = document.createElement("div");
+    const b = document.createElement("b");
+    b.textContent = label;
+    const code = document.createElement("code");
+    code.textContent = id;
+    left.append(b, code);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "small-btn";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", () => copy(id, btn));
+    row.append(left, btn);
+    $("ids").appendChild(row);
+    $("idsPanel").hidden = false;
+  }
+  async function attach(assistantId, newIds, names) {
+    const a = await vapi(`/assistant/${assistantId}`);
+    const label = a.name || assistantId;
+    if (!a.model || !a.model.provider) throw new Error(`${label} has no model set, so tools cannot be attached. Set a model in Vapi first.`);
+    const lower = names.map((n) => n.toLowerCase());
+    const byId = new Map(state.tools.map((t) => [t.id, toolName(t).toLowerCase()]));
+    const existing = a.model.toolIds || [];
+    const kept = existing.filter((id) => !lower.includes(byId.get(id) || ""));
+    const replaced = existing.length - kept.length;
+    const inline = (a.model.tools || []).filter((t) => lower.includes(toolName(t).toLowerCase()));
+    const model = { ...a.model, toolIds: Array.from(new Set([...kept, ...newIds])) };
+    if (inline.length) model.tools = a.model.tools.filter((t) => !lower.includes(toolName(t).toLowerCase()));
+    await vapi(`/assistant/${assistantId}`, "PATCH", { model });
+    return { label, replaced: replaced + inline.length };
+  }
+  async function create(e) {
+    e.preventDefault();
+    if (state.busy) return;
+    const problems = validate();
+    if (problems.length) return setStatus("stCreate", "Missing: " + problems.join(", ") + ".", "err");
+    setStatus("stCreate", "");
+    setBusy(true, "btnCreate", "btnPreview");
+    $("log").textContent = "";
+    $("ids").textContent = "";
+    $("idsPanel").hidden = true;
+    const payloads = selectedPayloads();
+    const created = [];
+    try {
+      for (const p of payloads) {
+        log(`Creating ${p.function.name}…`);
+        const t = await vapi("/tool", "POST", p);
+        created.push(t);
+        state.tools.push(t);
+        log(`Created ${p.function.name}`, "ok");
+        addIdRow(p.function.name, t.id);
+      }
+
+      const targets = selectedAssistants();
+      let failures = 0;
+      for (const id of targets) {
+        try {
+          const r = await attach(id, created.map((t) => t.id), payloads.map((p) => p.function.name));
+          log(`Attached to ${r.label}${r.replaced ? ` (replaced ${r.replaced} older cop${r.replaced === 1 ? "y" : "ies"})` : ""}`, "ok");
+        } catch (err) {
+          failures++;
+          log(err.status ? `Could not attach to ${(state.assistants.find((a) => a.id === id) || {}).name || id}: ${explain(err, "Vapi")}` : err.message, "err");
+        }
+      }
+      if (!targets.length) log("No agents selected. Attach the tools in Vapi under each agent's Tools tab.", "warn");
+      log("Paste the prompt section into each agent's system prompt, then Publish the agent in Vapi.", "warn");
+      const what = created.length === 1 ? "Tool" : "Tools";
+      setStatus("stCreate", failures ? `${what} created. Some agents could not be updated; see Progress.` : `Done. ${what} created` + (targets.length ? " and attached." : "."), failures ? "warn" : "ok");
+    } catch (err) {
+      log(explain(err, "Vapi"), "err");
+      if (created.length) log(`${created.map((t) => toolName(t)).join(", ")} was created before the error. Delete it in Vapi, or keep it and attach it by hand.`, "warn");
+      setStatus("stCreate", "Stopped on an error. See Progress.", "err");
+    } finally {
+      setBusy(false, "btnCreate", "btnPreview");
+    }
+  }
+
+  // ── wiring ───────────────────────────────────────────────────────────────
+  $("btnVapi").addEventListener("click", connectVapi);
+  $("vapiKey").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); connectVapi(); } });
+  $("btnGhl").addEventListener("click", loadCalendars);
+  $("btnTest").addEventListener("click", testAvailability);
+  $("calendarSel").addEventListener("change", (e) => { if (e.target.value) $("calendarId").value = e.target.value; });
+  ["timezone", "name1", "name2"].forEach((id) => $(id).addEventListener("input", renderPrompt));
+  ["name1", "name2", "business"].forEach((id) => $(id).addEventListener("input", checkNames));
+  ["use1", "use2"].forEach((id) => $(id).addEventListener("change", checkNames));
+  $("btnPreview").addEventListener("click", showPreview);
+  $("btnHidePreview").addEventListener("click", () => { $("previewPanel").hidden = true; });
+  $("btnCopyPrompt").addEventListener("click", (e) => copy(buildPrompt(), e.currentTarget));
+  $("btnClear").addEventListener("click", () => { $("log").textContent = ""; });
+  $("form").addEventListener("submit", create);
+  renderPrompt();
+})();
+</script>
+</body>
+</html>
